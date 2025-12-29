@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { GreenhousesService } from './greenhouses.service';
+import { SensorData } from './sensor-data.entity';
 
 @Controller('greenhouses')
 export class GreenhousesController {
@@ -13,5 +14,13 @@ export class GreenhousesController {
   @Post()
   create(@Body('name') name: string) {
     return this.greenhousesService.create(name);
+  }
+  @Post(':id/sync')
+  syncSensor(@Param('id') id: string) {
+    return this.greenhousesService.syncSensorData(+id);
+  }
+  @Get(':id/history')
+  getHistory(@Param('id') id: string): Promise<SensorData[]> {
+    return this.greenhousesService.getHistory(+id);
   }
 }

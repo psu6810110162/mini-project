@@ -1,48 +1,52 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Device, DeviceType } from './device.entity';
+import { Device } from './device.entity'; 
+import { Greenhouse } from '../greenhouses/greenhouse.entity';
+import { async } from 'rxjs';
 
 @Injectable()
 export class DevicesService {
   constructor(
     @InjectRepository(Device)
-    private devicesRepository: Repository<Device>,
+    private deviceRepository: Repository<Device>,
+    
+    @InjectRepository(Greenhouse)
+    private greenhouseRepository: Repository<Greenhouse>,
   ) {}
 
-  // ฟังก์ชันสำหรับเปิด-ปิดอุปกรณ์
-  async toggleDevice(deviceId: number, shouldTurnOn: boolean): Promise<Device> {
-    // 1. ค้นหาอุปกรณ์จาก ID และดึงข้อมูลโรงเรือนมาด้วย (relations)
-    const device = await this.devicesRepository.findOne({
-      where: { id: deviceId },
-      relations: ['greenhouse'], 
-    });
+  async create(name: string, type: string, greenhouseId: number): Promise<Device> {
+    const greenhouse = await this.greenhouseRepository.findOneBy({ id: greenhouseId });
+    
+    if (!greenhouse) {
+      throw new NotFoundException(`ไม่พบโรงเรือน ID: ${greenhouseId}`);
+    }
 
+    const device = new Device();
+    device.name = name;
+    
+    device.type = type.toUpperCase(); 
+    
+    device.is_active = false; 
+    
+    device.greenhouse = greenhouse;
+
+    return this.deviceRepository.save(device);
+  }
+
+  findAll(): Promise<Device[]> {
+    return this.deviceRepository.find({ relations: ['greenhouse'] });
+  }
+
+  async toggle(id: number): Promise<Device> {
+    const device = await this.deviceRepository.findOneBy({ id });
+    
     if (!device) {
-      throw new NotFoundException(`ไม่พบอุปกรณ์ ID: ${deviceId}`);
+      throw new NotFoundException(`ไม่พบอุปกรณ์ ID: ${id}`);
     }
 
-    // 2. Logic: ถ้าเป็นการ "เปิด" และอุปกรณ์เป็น "ปั๊มน้ำ"
-    if (shouldTurnOn && device.type === DeviceType.PUMP) {
-      // นับจำนวนปั๊มที่เปิดอยู่ ในโรงเรือนเดียวกัน
-      const activePumps = await this.devicesRepository.count({
-        where: {
-          greenhouse: { id: device.greenhouse.id }, // เช็คเฉพาะโรงเรือนนี้
-          type: DeviceType.PUMP,
-          is_active: true,
-        },
-      });
+    device.is_active = !device.is_active;
 
-      // ถ้าเปิดอยู่แล้ว 2 ตัว และกำลังจะเปิดเพิ่ม -> ห้าม!
-      if (activePumps >= 2) {
-        throw new BadRequestException(
-          'ไม่สามารถเปิดปั๊มน้ำเพิ่มได้: อนุญาตให้เปิดพร้อมกันสูงสุดแค่ 2 ตัวในโรงเรือนเดียวกัน',
-        );
-      }
-    }
-
-    // 3. ถ้าผ่านเงื่อนไข ก็บันทึกสถานะใหม่
-    device.is_active = shouldTurnOn;
-    return await this.devicesRepository.save(device);
+    return this.deviceRepository.save(device);
   }
 }

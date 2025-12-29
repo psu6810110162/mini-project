@@ -1,17 +1,26 @@
-import { Controller, Patch, Param, Body, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param } from '@nestjs/common';
 import { DevicesService } from './devices.service';
 
 @Controller('devices')
 export class DevicesController {
   constructor(private readonly devicesService: DevicesService) {}
 
-  // API Endpoint: PATCH /devices/:id/toggle
-  // Body: { "isActive": true }
-  @Patch(':id/toggle')
-  async toggleStatus(
-    @Param('id', ParseIntPipe) id: number,
-    @Body('isActive') isActive: boolean,
+  @Post()
+  create(
+    @Body('name') name: string,
+    @Body('type') type: string,
+    @Body('greenhouseId') greenhouseId: number,
   ) {
-    return this.devicesService.toggleDevice(id, isActive);
+    return this.devicesService.create(name, type, greenhouseId);
+  }
+
+  @Get()
+  findAll() {
+    return this.devicesService.findAll();
+  }
+  
+  @Patch(':id/toggle') 
+  toggleDevice(@Param('id') id: string) {
+    return this.devicesService.toggle(+id); 
   }
 }

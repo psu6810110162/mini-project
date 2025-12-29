@@ -4,10 +4,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 // import Modules ของเรา (เดี๋ยวเราค่อยสร้างไฟล์พวกนี้ทีหลัง)
 import { GreenhousesModule } from './greenhouses/greenhouses.module';
 import { DevicesModule } from './devices/devices.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }), 
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -23,6 +25,7 @@ import { DevicesModule } from './devices/devices.module';
         synchronize: true,
       }),
     }),
+
     GreenhousesModule,
     DevicesModule,
   ],

@@ -22,3 +22,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# --- AgriControl Project Specific ---
+
+# Environment Variables (ไฟล์เก็บความลับ ห้ามหลุด!)
+.env
+.env.*
+backend/.env
+
+# Database Data (ข้อมูลใน DB ห้ามเอาขึ้น Git เดี๋ยวทับของเพื่อน)
+pgdata/
+
+# OS Files (ไฟล์ขยะของ Windows)
+Thumbs.db
+ehthumbs.db
+Desktop.ini

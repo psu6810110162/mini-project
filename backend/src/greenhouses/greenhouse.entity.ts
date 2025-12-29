@@ -1,21 +1,24 @@
-// src/greenhouses/greenhouse.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Device } from '../devices/device.entity';
+import { SensorData } from './sensor-data.entity';
 
-@Entity('greenhouses') // ชื่อตารางใน Database
+@Entity()
 export class Greenhouse {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 100 })
-  name: string; // ชื่อโรงเรือน
+  @Column()
+  name: string;
 
-  @Column({ type: 'text', nullable: true })
-  location: string; // สถานที่ตั้ง (ใส่หรือไม่ใส่ก็ได้)
+  @Column('float', { default: 25.0 })
+  temp: number;
 
-  // ความสัมพันธ์: 1 โรงเรือน มีได้หลายอุปกรณ์ (One-to-Many)
-  @OneToMany(() => Device, (device) => device.greenhouse)
-  devices: Device[];
-  
-  // NOTE: ความสัมพันธ์กับ Users (Many-to-Many) เดี๋ยวรอ Person A สร้าง User Entity เสร็จค่อยมาเติมนะครับ
+  @Column('float', { default: 60.0 })
+  humidity: number;
+
+  @OneToMany(() => Device, (device) => device.greenhouse, { cascade: true })
+  devices: Device[]; // 👈 ต้องมีบรรทัดนี้
+
+  @OneToMany(() => SensorData, (data) => data.greenhouse)
+  sensorData: SensorData[];
 }

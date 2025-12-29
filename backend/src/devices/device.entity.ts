@@ -1,36 +1,23 @@
-// src/devices/device.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { Greenhouse } from '../greenhouses/greenhouse.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Greenhouse } from '../greenhouses/greenhouse.entity'; // 👈 import
 
-// Enum เพื่อบังคับว่า device_type ต้องเป็นค่าที่เรากำหนดเท่านั้น (Strict Typing)
-export enum DeviceType {
-  FAN = 'FAN',
-  PUMP = 'PUMP',
-  LIGHT = 'LIGHT',
-}
-
-@Entity('devices')
+@Entity()
 export class Device {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
-  name: string; // ชื่ออุปกรณ์ เช่น "พัดลมตัวที่ 1"
+  name: string;
 
-  @Column({
-    type: 'enum',
-    enum: DeviceType,
-    default: DeviceType.FAN
-  })
-  type: DeviceType; // ประเภทอุปกรณ์
+  @Column()
+  type: string; // 'FAN', 'PUMP', 'LIGHT'
 
   @Column({ default: false })
-  is_active: boolean; // สถานะการทำงาน (เปิด/ปิด)
+  is_active: boolean;
 
-  // ความสัมพันธ์: หลายอุปกรณ์ อยู่ใน 1 โรงเรือน (Many-to-One)
+  // 👇 ต้องมีท่อนนี้
   @ManyToOne(() => Greenhouse, (greenhouse) => greenhouse.devices, {
-    onDelete: 'CASCADE', // ถ้าลบโรงเรือน อุปกรณ์ข้างในหายหมด
+    onDelete: 'CASCADE', // ถ้าลบโรงเรือน อุปกรณ์หายด้วย
   })
-  @JoinColumn({ name: 'greenhouse_id' }) // ชื่อ Foreign Key ในตาราง
   greenhouse: Greenhouse;
 }
