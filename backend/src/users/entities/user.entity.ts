@@ -1,7 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { Role } from './role.entity';
-// ต้องมีไฟล์ Greenhouse อยู่ที่ path นี้นะครับ
-import { Greenhouse } from '../../greenhouses/greenhouse.entity';
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
@@ -11,17 +10,9 @@ export class User {
   username: string;
 
   @Column()
-  passwordHash: string;
+  password: string; // 👈 เราจะใช้ชื่อนี้เป็นหลักนะครับ
 
-  @ManyToOne(() => Role, (role) => role.users)
-  @JoinColumn({ name: 'role_id' })
+  // เชื่อมกับ Role
+  @ManyToOne(() => Role, (role) => role.users, { eager: true })
   role: Role;
-
-  @ManyToMany(() => Greenhouse)
-  @JoinTable({
-    name: 'user_greenhouses',
-    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'greenhouse_id', referencedColumnName: 'id' },
-  })
-  greenhouses: Greenhouse[];
 }

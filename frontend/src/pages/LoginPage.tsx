@@ -23,20 +23,19 @@ const LoginPage: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         username,
         password,
       });
-
+      console.log("DATA ที่ได้จาก Backend:", response.data);
+      
       // ถ้าล็อกอินผ่าน
       const token = response.data.access_token;
       localStorage.setItem('token', token); // เก็บ Token ไว้
-      onLoginSuccess(token); // แจ้ง App ว่าผ่านแล้ว
+      window.location.reload();// แจ้ง App ว่าผ่านแล้ว
+      const role = response.data.user.role; 
+      localStorage.setItem("role", role);
 
     } catch (err) {
       console.error(err);
       setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (หรือ Backend ยังไม่เปิด)');
       
-      // --- 👇 สูตรโกง: ถ้าอยากเทสปุ่มกดให้ผ่านเลย โดยไม่ต้องต่อ Server ให้เปิดคอมเมนต์นี้ ---
-      // localStorage.setItem('token', 'fake-token');
-      // onLoginSuccess('fake-token');
-      // --- 👆 จบสูตรโกง ---
     } finally {
       setLoading(false);
     }

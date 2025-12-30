@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import HistoryChart from './HistoryChart';
+import HistoryChart from './HistoryChart'; // ตรวจสอบว่าไฟล์นี้อยู่ในโฟลเดอร์ pages เหมือนกันนะครับ
 
 // --- Interfaces ---
 interface Device {
@@ -20,6 +20,10 @@ interface Greenhouse {
 const DashboardPage = () => {
   const [greenhouses, setGreenhouses] = useState<Greenhouse[]>([]);
   
+  // 1. ดึง Token และ Role ออกมาใช้
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('role') || 'USER';
+  
   // State Modal
   const [showGhModal, setShowGhModal] = useState(false);
   const [newGhName, setNewGhName] = useState('');
@@ -28,29 +32,40 @@ const DashboardPage = () => {
   const [newDevType, setNewDevType] = useState('FAN');
   const [selectedGhId, setSelectedGhId] = useState<number | null>(null);
 
+  // 2. สร้าง Config สำหรับแนบ Token ไปกับทุก Request
+  const authConfig = {
+    headers: { Authorization: `Bearer ${token}` }
+  };
+
   // Fetch Data
   const fetchData = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/greenhouses');
+      // ใส่ authConfig เข้าไปใน axios
+      const res = await axios.get('http://localhost:3000/greenhouses', authConfig);
       setGreenhouses(res.data);
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error("Error fetching data:", error);
+      // ถ้า Token หมดอายุ หรือไม่มีสิทธิ์ ให้ดีดออกไปหน้า Login
+      // window.location.reload(); 
+    }
   };
 
   useEffect(() => {
+    if (!token) return; // ถ้าไม่มี token ไม่ต้องดึงข้อมูล
     fetchData();
     const interval = setInterval(fetchData, 2000); // Auto refresh
     return () => clearInterval(interval);
-  }, []);
+  }, [token]);
 
   // Save Greenhouse
   const saveGreenhouse = async () => {
     if (!newGhName) return alert("กรุณาใส่ชื่อโรงเรือน");
     try {
-      await axios.post('http://localhost:3000/greenhouses', { name: newGhName });
+      await axios.post('http://localhost:3000/greenhouses', { name: newGhName }, authConfig);
       setShowGhModal(false);
       setNewGhName('');
       fetchData();
-    } catch (err) { alert("เกิดข้อผิดพลาด"); }
+    } catch (err) { alert("เกิดข้อผิดพลาดในการบันทึก"); }
   };
 
   // Open Device Modal
@@ -67,7 +82,7 @@ const DashboardPage = () => {
     try {
       await axios.post('http://localhost:3000/devices', {
         name: newDevName, type: newDevType, greenhouseId: selectedGhId
-      });
+      }, authConfig);
       setShowDevModal(false);
       fetchData();
     } catch (err) { alert("เกิดข้อผิดพลาด"); }
@@ -75,20 +90,19 @@ const DashboardPage = () => {
 
   // Toggle Device
   const toggleDevice = async (id: number, status: boolean) => {
-    await axios.patch(`http://localhost:3000/devices/${id}`, { is_active: !status });
-    fetchData();
+    try {
+        await axios.patch(`http://localhost:3000/devices/${id}`, { is_active: !status }, authConfig);
+        fetchData();
+    } catch (err) {
+        console.error("Error toggling device");
+    }
   };
 
   return (
     <div style={{ 
-      width: '100%',             // บังคับเต็มจอแนวนอน
-      minHeight: '100vh',        // สูงเต็มจอแนวตั้ง
-      padding: '40px 20px', 
-      boxSizing: 'border-box',   // คิดขอบรวมในความกว้าง
-      backgroundColor: '#f9f9f9', 
-      display: 'flex',           // ใช้ Flexbox จัด layout
-      flexDirection: 'column',   // เรียงจากบนลงล่าง
-      alignItems: 'center'       // จัดกึ่งกลางแกนขวาง (ซ้าย-ขวา) 👈 ตัวนี้คือพระเอก
+      width: '100%', minHeight: '100vh', padding: '40px 20px', 
+      boxSizing: 'border-box', backgroundColor: '#f9f9f9', 
+      display: 'flex', flexDirection: 'column', alignItems: 'center'
     }}>
       
       {/* Header */}
@@ -96,12 +110,16 @@ const DashboardPage = () => {
         <h1 style={{ color: '#2c3e50', margin: '0 0 20px 0', fontSize: '36px' }}>
           🌿 Smart Farm Dashboard
         </h1>
-        <button 
-          onClick={() => setShowGhModal(true)}
-          style={addButtonStyle}
-        >
-          + เพิ่มโรงเรือนใหม่
-        </button>
+        
+        {/* ✅ ปุ่มเพิ่มโรงเรือน (เห็นเฉพาะ ADMIN) */}
+        {userRole === 'ADMIN' && (
+            <button 
+              onClick={() => setShowGhModal(true)}
+              style={addButtonStyle}
+            >
+              + เพิ่มโรงเรือนใหม่
+            </button>
+        )}
       </div>
 
       {/* List */}
@@ -148,13 +166,17 @@ const DashboardPage = () => {
                   </span>
                 </button>
               ))}
-              <button onClick={() => openAddDeviceModal(gh.id)} style={addDeviceBtnStyle}>+ เพิ่ม</button>
+              
+              {/* ✅ ปุ่มเพิ่มอุปกรณ์ (เห็นเฉพาะ ADMIN) */}
+              {userRole === 'ADMIN' && (
+                  <button onClick={() => openAddDeviceModal(gh.id)} style={addDeviceBtnStyle}>+ เพิ่ม</button>
+              )}
             </div>
           </div>
 
           <hr style={{ border: '0', borderTop: '1px solid #f0f0f0', margin: '25px 0' }} />
           
-          {/* Chart Wrapper: ใส่ความสูงคงที่เพื่อแก้ Error กราฟไม่ขึ้น */}
+          {/* Chart Wrapper */}
           <div style={{ width: '100%', height: '300px' }}>
              <HistoryChart ghId={gh.id} />
           </div>
