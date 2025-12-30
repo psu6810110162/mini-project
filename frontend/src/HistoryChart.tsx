@@ -1,27 +1,23 @@
 import { useEffect, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+} from 'recharts';
 import axios from 'axios';
 
-// กำหนดหน้าตาข้อมูล
 interface ChartProps {
-  ghId: number; // รับ ID โรงเรือนเข้ามา
+  ghId: number;
 }
 
 export default function HistoryChart({ ghId }: ChartProps) {
   const [data, setData] = useState([]);
 
-  // ฟังก์ชันดึงประวัติ
   const fetchHistory = async () => {
     try {
       const res = await axios.get(`http://localhost:3000/greenhouses/${ghId}/history`);
-      
-      // แปลงข้อมูลนิดหน่อย (กลับด้านข้อมูลให้เวลาเรียงจาก อดีต -> ปัจจุบัน)
-      // และแปลงวันที่ให้อ่านง่าย
       const formattedData = res.data.reverse().map((item: any) => ({
         ...item,
-        time: new Date(item.timestamp).toLocaleTimeString('th-TH'), // แปลงเวลาเป็นไทย
+        time: new Date(item.timestamp).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       }));
-
       setData(formattedData);
     } catch (error) {
       console.error("Error fetching history:", error);
@@ -30,30 +26,97 @@ export default function HistoryChart({ ghId }: ChartProps) {
 
   useEffect(() => {
     fetchHistory();
-    // ตั้งเวลาให้ดึงกราฟใหม่ทุก 5 วินาที
     const interval = setInterval(fetchHistory, 5000);
     return () => clearInterval(interval);
   }, [ghId]);
 
+  // 🎨 สร้างกล่อง Tooltip เอง (เวลาเอาเมาส์ชี้)
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          border: '1px solid #ddd',
+          borderRadius: '8px',
+          padding: '10px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+        }}>
+          <p style={{ margin: 0, fontWeight: 'bold', color: '#555' }}>⏰ {label}</p>
+          <div style={{ marginTop: '5px' }}>
+            <p style={{ margin: 0, color: '#ff4d4d', fontSize: '14px' }}>
+              🌡️ อุณหภูมิ: <b>{payload[0].value}°C</b>
+            </p>
+            <p style={{ margin: 0, color: '#3498db', fontSize: '14px' }}>
+              💧 ความชื้น: <b>{payload[1].value}%</b>
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div style={{ width: '100%', height: 300, marginTop: '20px' }}>
-      <h4 style={{ textAlign: 'center' }}>📊 กราฟอุณหภูมิและความชื้น (ย้อนหลัง 20 รายการ)</h4>
+    <div style={{ width: '100%', height: 320, marginTop: '20px' }}>
+      <h4 style={{ textAlign: 'center', color: '#7f8c8d', marginBottom: '10px' }}>
+        📊 กราฟแสดงผลย้อนหลัง (Real-time)
+      </h4>
       
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart
+        <AreaChart
           data={data}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
         >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="time" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          {/* เส้นสีแดง = อุณหภูมิ */}
-          <Line type="monotone" dataKey="temp" stroke="#ff0000" name="อุณหภูมิ (°C)" />
-          {/* เส้นสีฟ้า = ความชื้น */}
-          <Line type="monotone" dataKey="humidity" stroke="#0088fe" name="ความชื้น (%)" />
-        </LineChart>
+          {/* 1. กำหนดการไล่สี (Gradient) */}
+          <defs>
+            <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#ff4d4d" stopOpacity={0.8}/>
+              <stop offset="95%" stopColor="#ff4d4d" stopOpacity={0}/>
+            </linearGradient>
+            <linearGradient id="colorHum" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#3498db" stopOpacity={0.8}/>
+              <stop offset="95%" stopColor="#3498db" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+          
+          <XAxis 
+            dataKey="time" 
+            tick={{ fontSize: 12, fill: '#aaa' }} 
+            tickLine={false}
+            axisLine={false} 
+          />
+          <YAxis 
+            tick={{ fontSize: 12, fill: '#aaa' }} 
+            tickLine={false}
+            axisLine={false}
+          />
+          
+          <Tooltip content={<CustomTooltip />} />
+
+          {/* 2. พื้นที่กราฟ (Area) */}
+          <Area 
+            type="monotone" 
+            dataKey="temp" 
+            stroke="#ff4d4d" 
+            strokeWidth={3}
+            fillOpacity={1} 
+            fill="url(#colorTemp)" 
+            name="อุณหภูมิ"
+            activeDot={{ r: 6, strokeWidth: 0 }}
+          />
+          <Area 
+            type="monotone" 
+            dataKey="humidity" 
+            stroke="#3498db" 
+            strokeWidth={3}
+            fillOpacity={1} 
+            fill="url(#colorHum)" 
+            name="ความชื้น"
+            activeDot={{ r: 6, strokeWidth: 0 }}
+          />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );
