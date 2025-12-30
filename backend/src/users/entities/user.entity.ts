@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
 import { Role } from './role.entity';
-
-@Entity('users') // ชื่อตารางใน Database
+// ต้องมีไฟล์ Greenhouse อยู่ที่ path นี้นะครับ
+import { Greenhouse } from '../../greenhouses/greenhouse.entity';
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -10,10 +11,17 @@ export class User {
   username: string;
 
   @Column()
-  password_hash: string;
+  passwordHash: string;
 
-  // ความสัมพันธ์: User หลายคน มี Role เดียวกันได้ (เช่น เป็น Admin เหมือนกัน)
   @ManyToOne(() => Role, (role) => role.users)
-  @JoinColumn({ name: 'role_id' }) // ตั้งชื่อคอลัมน์ใน DB ว่า role_id
+  @JoinColumn({ name: 'role_id' })
   role: Role;
+
+  @ManyToMany(() => Greenhouse)
+  @JoinTable({
+    name: 'user_greenhouses',
+    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'greenhouse_id', referencedColumnName: 'id' },
+  })
+  greenhouses: Greenhouse[];
 }

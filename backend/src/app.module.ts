@@ -1,31 +1,26 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-// import Modules ของเรา (เดี๋ยวเราค่อยสร้างไฟล์พวกนี้ทีหลัง)
 import { GreenhousesModule } from './greenhouses/greenhouses.module';
 import { DevicesModule } from './devices/devices.module';
-import { ScheduleModule } from '@nestjs/schedule';
+import { Greenhouse } from './greenhouses/greenhouse.entity';
+import { Device } from './devices/device.entity';
+import { SensorData } from './greenhouses/sensor-data.entity';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }), 
-    ScheduleModule.forRoot(),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: 'localhost',        
-        port: 5432,                
-        username: 'admin',         
-        password: 'password123', 
-        database: 'agricontrol',    
-      
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true,
-      }),
+    // 1. ตั้งค่า Database (ตรงกับ Docker ด้านบน)
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'localhost',
+      port: 5432,
+      username: 'admin',
+      password: 'password123',
+      database: 'agricontrol',
+      entities: [Greenhouse, Device, SensorData], // ใส่ Entity ให้ครบ
+      synchronize: true, // ห้ามใช้บน Production แต่ Dev ใช้ได้ (สร้างตารางให้อัตโนมัติ)
     }),
-
+    
+    // 2. โหลด Module ย่อย
     GreenhousesModule,
     DevicesModule,
   ],

@@ -5,15 +5,8 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // API: POST /auth/register
-  @Post('register')
-  register(@Body() body: any) {
-    return this.authService.register(body);
-  }
-
-  // API: POST /auth/login
   @Post('login')
-  login(@Body() body: any) {
+  login(@Body() body: any) { // ใช้ any ชั่วคราว เดี๋ยวเรามาทำ DTO ทีหลัง
     return this.authService.login(body);
   }
 }
