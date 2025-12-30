@@ -7,6 +7,7 @@ import { async } from 'rxjs';
 
 @Injectable()
 export class DevicesService {
+  [x: string]: any;
   constructor(
     @InjectRepository(Device)
     private deviceRepository: Repository<Device>,
@@ -48,5 +49,8 @@ export class DevicesService {
     device.is_active = !device.is_active;
 
     return this.deviceRepository.save(device);
+  }
+  async remove(id: number): Promise<void> {
+  await this.deviceRepository.delete(id);
   }
 }

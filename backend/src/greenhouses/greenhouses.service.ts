@@ -7,6 +7,7 @@ import { SensorData } from './sensor-data.entity';
 
 @Injectable()
 export class GreenhousesService {
+  [x: string]: any;
   constructor(
     @InjectRepository(Greenhouse)
     private greenhouseRepository: Repository<Greenhouse>,
@@ -40,7 +41,7 @@ export class GreenhousesService {
 
     for (const gh of greenhouses) {
       // สุ่มค่าแบบเนียนๆ (บวกหรือลบจากค่าเดิมนิดหน่อย)
-      const tempChange = (Math.random() * 5 - 4); 
+      const tempChange = (Math.random() * 10 - 5); 
       const humidChange = (Math.random() * 20 - 10);
 
       gh.temp = parseFloat(Math.min(Math.max(gh.temp + tempChange, 30), 45).toFixed(1));
@@ -80,6 +81,10 @@ export class GreenhousesService {
       take: 20,
     });
   }
+  
+  async remove(id: number): Promise<void> {
+  await this.greenhouseRepository.delete(id); // ลบโรงเรือน (อุปกรณ์ข้างในจะโดนลบด้วยถ้าตั้ง OnDelete: 'CASCADE')
+}
 
   // 5. กรณีอยากกด Sync เองจากหน้าเว็บ (ถ้ามีปุ่ม)
   async syncSensorData(id: number): Promise<Greenhouse> {

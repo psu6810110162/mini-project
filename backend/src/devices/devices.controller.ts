@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { DevicesService } from './devices.service';
 
 @Controller('devices')
@@ -22,5 +22,10 @@ export class DevicesController {
   @Patch(':id/toggle') 
   toggleDevice(@Param('id') id: string) {
     return this.devicesService.toggle(+id); 
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.devicesService.remove(+id);
   }
 }

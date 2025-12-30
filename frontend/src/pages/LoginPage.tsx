@@ -5,7 +5,7 @@ interface LoginProps {
   onLoginSuccess: (token: string) => void;
 }
 
-const LoginPage: React.FC<LoginProps> = ({ onLoginSuccess }) => {
+const LoginPage: React.FC<LoginProps> = ({ }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { GreenhousesService } from './greenhouses.service';
 import { SensorData } from './sensor-data.entity';
 
@@ -22,5 +22,9 @@ export class GreenhousesController {
   @Get(':id/history')
   getHistory(@Param('id') id: string): Promise<SensorData[]> {
     return this.greenhousesService.getHistory(+id);
+  }
+  @Delete(':id')
+remove(@Param('id') id: string) {
+  return this.greenhousesService.remove(+id);
   }
 }
