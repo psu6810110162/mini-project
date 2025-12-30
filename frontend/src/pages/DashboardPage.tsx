@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import HistoryChart from './HistoryChart'; // ตรวจสอบว่าไฟล์นี้อยู่ในโฟลเดอร์ pages เหมือนกันนะครับ
+import HistoryChart from './HistoryChart';
 
 // --- Interfaces ---
 interface Device {
@@ -19,11 +19,9 @@ interface Greenhouse {
 
 const DashboardPage = () => {
   const [greenhouses, setGreenhouses] = useState<Greenhouse[]>([]);
-  
-  // 1. ดึง Token และ Role ออกมาใช้
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('role') || 'USER';
-  
+
   // State Modal
   const [showGhModal, setShowGhModal] = useState(false);
   const [newGhName, setNewGhName] = useState('');
@@ -32,32 +30,59 @@ const DashboardPage = () => {
   const [newDevType, setNewDevType] = useState('FAN');
   const [selectedGhId, setSelectedGhId] = useState<number | null>(null);
 
-  // 2. สร้าง Config สำหรับแนบ Token ไปกับทุก Request
   const authConfig = {
     headers: { Authorization: `Bearer ${token}` }
   };
 
-  // Fetch Data
+  // --- 🛠️ ฟังก์ชันดึงข้อมูล (แก้ให้ตัวเลขขยับแล้ว) ---
   const fetchData = async () => {
     try {
-      // ใส่ authConfig เข้าไปใน axios
+      // 1. ดึงรายชื่อโรงเรือน
       const res = await axios.get('http://localhost:3000/greenhouses', authConfig);
-      setGreenhouses(res.data);
+      const ghList = res.data;
+
+      // 2. ดึงค่าล่าสุดมาอัปเดตกล่องตัวเลข
+      const updatedList = await Promise.all(ghList.map(async (gh: Greenhouse) => {
+        try {
+          // ใช้ URL เดียวกับที่กราฟใช้เพื่อให้ได้ข้อมูลล่าสุด
+          const historyRes = await axios.get(`http://localhost:3000/greenhouses/${gh.id}/history`, authConfig);
+          const readings = historyRes.data;
+
+          if (readings && readings.length > 0) {
+            const latest = readings[0]; // Backend ส่ง DESC มา ค่าล่าสุดอยู่ตำแหน่งที่ 0
+            return { 
+              ...gh, 
+              temp: latest.temp, 
+              humidity: latest.humidity 
+            };
+          }
+        } catch (err) {
+          console.error(`Error fetching latest data for GH ${gh.id}`);
+        }
+        return gh;
+      }));
+
+      setGreenhouses(updatedList);
     } catch (error) { 
       console.error("Error fetching data:", error);
-      // ถ้า Token หมดอายุ หรือไม่มีสิทธิ์ ให้ดีดออกไปหน้า Login
-      // window.location.reload(); 
     }
   };
 
   useEffect(() => {
-    if (!token) return; // ถ้าไม่มี token ไม่ต้องดึงข้อมูล
-    fetchData();
-    const interval = setInterval(fetchData, 2000); // Auto refresh
-    return () => clearInterval(interval);
-  }, [token]);
+  if (!token) {
+    window.location.href = '/login'; 
+    return;
+  }
+  
+  fetchData(); // ดึงครั้งแรกทันทีที่เปิดหน้า
 
-  // Save Greenhouse
+  // ⏱️ ตั้งให้ดึงข้อมูลใหม่ทุก 2 วินาที (เร็วกว่าการสุ่มของหลังบ้านนิดหน่อยเพื่อให้ข้อมูลสดเสมอ)
+  const interval = setInterval(fetchData, 2000); 
+  
+  return () => clearInterval(interval);
+}, [token]);
+
+  // --- Actions ---
   const saveGreenhouse = async () => {
     if (!newGhName) return alert("กรุณาใส่ชื่อโรงเรือน");
     try {
@@ -68,7 +93,6 @@ const DashboardPage = () => {
     } catch (err) { alert("เกิดข้อผิดพลาดในการบันทึก"); }
   };
 
-  // Open Device Modal
   const openAddDeviceModal = (ghId: number) => {
     setSelectedGhId(ghId);
     setNewDevName('');
@@ -76,7 +100,6 @@ const DashboardPage = () => {
     setShowDevModal(true);
   };
 
-  // Save Device
   const saveDevice = async () => {
     if (!newDevName || selectedGhId === null) return alert("ข้อมูลไม่ครบ");
     try {
@@ -88,106 +111,105 @@ const DashboardPage = () => {
     } catch (err) { alert("เกิดข้อผิดพลาด"); }
   };
 
-  // Toggle Device
   const toggleDevice = async (id: number, status: boolean) => {
     try {
-        await axios.patch(`http://localhost:3000/devices/${id}`, { is_active: !status }, authConfig);
-        fetchData();
-    } catch (err) {
-        console.error("Error toggling device");
-    }
-  };
+      await axios.patch(`http://localhost:3000/devices/${id}/toggle`, {}, authConfig);
+      fetchData();
+  } catch (err) {
+    console.error("กดเปิดปิดไม่ได้:", err);
+    alert("เกิดข้อผิดพลาดในการสั่งงานอุปกรณ์");
+  }
+};
 
   return (
-    <div style={{ 
-      width: '100%', minHeight: '100vh', padding: '40px 20px', 
-      boxSizing: 'border-box', backgroundColor: '#f9f9f9', 
-      display: 'flex', flexDirection: 'column', alignItems: 'center'
-    }}>
+    <div style={{ backgroundColor: '#f4f7f6', minHeight: '100vh', paddingBottom: '60px' }}>
       
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ color: '#2c3e50', margin: '0 0 20px 0', fontSize: '36px' }}>
-          🌿 Smart Farm Dashboard
-        </h1>
-        
-        {/* ✅ ปุ่มเพิ่มโรงเรือน (เห็นเฉพาะ ADMIN) */}
-        {userRole === 'ADMIN' && (
-            <button 
-              onClick={() => setShowGhModal(true)}
-              style={addButtonStyle}
-            >
-              + เพิ่มโรงเรือนใหม่
-            </button>
-        )}
-      </div>
-
-      {/* List */}
-      {greenhouses.map((gh) => (
-        <div key={gh.id} style={cardStyle}>
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 style={{ margin: 0, color: '#34495e', fontSize: '24px' }}>🏡 {gh.name}</h2>
-            <span style={{ color: '#bdc3c7', fontSize: '14px', backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '6px' }}>
-              ID: {gh.id}
-            </span>
+      {/* --- ✨ New Header Section --- */}
+      <header style={headerStyle}>
+        <div style={headerInnerStyle}>
+          <div style={{ flex: 1 }}>
+            <h1 style={brandTitleStyle}>🌿 Smart Farm Monitoring</h1>
+            <p style={brandSubtitleStyle}>ระบบบริหารจัดการสภาพแวดล้อมและอุปกรณ์อัตโนมัติ</p>
           </div>
-
-          {/* Sensors */}
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
-            <div style={sensorBoxStyle('#ffebee', '#c62828')}>
-              <div style={{ fontSize: '14px', opacity: 0.8, marginBottom: '5px' }}>อุณหภูมิ</div>
-              <div style={{ fontSize: '36px', fontWeight: 'bold' }}>🌡️ {gh.temp}°C</div>
-            </div>
-            <div style={sensorBoxStyle('#e3f2fd', '#1565c0')}>
-              <div style={{ fontSize: '14px', opacity: 0.8, marginBottom: '5px' }}>ความชื้น</div>
-              <div style={{ fontSize: '36px', fontWeight: 'bold' }}>💧 {gh.humidity}%</div>
-            </div>
-          </div>
-
-          {/* Controls */}
-          <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ margin: '0 0 15px 0', color: '#7f8c8d' }}>⚙️ ควบคุมอุปกรณ์</h4>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              {gh.devices.map((device) => (
-                <button
-                  key={device.id}
-                  onClick={() => toggleDevice(device.id, device.is_active)}
-                  style={{
-                    ...deviceButtonStyle,
-                    backgroundColor: device.is_active ? '#2ecc71' : '#f1f2f6',
-                    color: device.is_active ? 'white' : '#7f8c8d',
-                  }}
-                >
-                  {device.type === 'FAN' ? '💨' : device.type === 'PUMP' ? '💦' : '💡'} 
-                  {device.name}
-                  <span style={{ fontSize: '11px', opacity: 0.7, marginLeft: '5px' }}>
-                    {device.is_active ? 'ON' : 'OFF'}
-                  </span>
-                </button>
-              ))}
-              
-              {/* ✅ ปุ่มเพิ่มอุปกรณ์ (เห็นเฉพาะ ADMIN) */}
-              {userRole === 'ADMIN' && (
-                  <button onClick={() => openAddDeviceModal(gh.id)} style={addDeviceBtnStyle}>+ เพิ่ม</button>
-              )}
-            </div>
-          </div>
-
-          <hr style={{ border: '0', borderTop: '1px solid #f0f0f0', margin: '25px 0' }} />
-          
-          {/* Chart Wrapper */}
-          <div style={{ width: '100%', height: '300px' }}>
-             <HistoryChart ghId={gh.id} />
+          <div style={userActionStyle}>
+             <span style={roleBadgeStyle}>{userRole}</span>
+             <button onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={logoutBtnStyle}>ออกจากระบบ</button>
           </div>
         </div>
-      ))}
+        
+        <div style={actionRowStyle}>
+          <div style={innerActionRowStyle}>
+            {userRole === 'ADMIN' && (
+              <button onClick={() => setShowGhModal(true)} style={addGhButtonStyle}>
+                + เพิ่มโรงเรือนใหม่
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
 
-      {/* --- MODALS --- */}
+      {/* --- Main Content --- */}
+      <div style={containerStyle}>
+        <div style={gridContainerStyle}>
+          {greenhouses.map((gh) => (
+            <div key={gh.id} style={cardStyle}>
+              
+              <div style={cardHeaderStyle}>
+                <h3 style={{ margin: 0, color: '#2c3e50', fontSize: '26px' }}>🏡 {gh.name}</h3>
+                <span style={idBadgeStyle}>Device ID: {gh.id}</span>
+              </div>
+
+              {/* Sensor Display */}
+              <div style={{ display: 'flex', gap: '15px', marginBottom: '25px' }}>
+                <div style={sensorBoxStyle('#fff5f5', '#e53e3e')}>
+                  <span style={sensorLabelStyle}>อุณหภูมิ</span>
+                  <strong style={sensorValueStyle}>{gh.temp ?? '--'}°C</strong>
+                </div>
+                <div style={sensorBoxStyle('#e3f2fd', '#1565c0')}>
+                  <span style={sensorLabelStyle}>ความชื้น</span>
+                  <strong style={sensorValueStyle}>{gh.humidity ?? '--'}%</strong>
+                </div>
+              </div>
+
+              {/* Device Controls */}
+              <div style={{ marginBottom: '20px' }}>
+                <p style={controlHeaderStyle}>อุปกรณ์ควบคุม</p>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {gh.devices?.map((device) => (
+                    <button
+                      key={device.id}
+                      onClick={() => toggleDevice(device.id, device.is_active)}
+                      style={{
+                        ...deviceButtonStyle,
+                        backgroundColor: device.is_active ? '#2ecc71' : '#fff',
+                        color: device.is_active ? '#fff' : '#7f8c8d',
+                        borderColor: device.is_active ? '#2ecc71' : '#dcdde1'
+                      }}
+                    >
+                      {device.type === 'FAN' ? '💨' : device.type === 'PUMP' ? '💦' : '💡'} 
+                      <span style={{ marginLeft: '6px' }}>{device.name}</span>
+                    </button>
+                  ))}
+                  {userRole === 'ADMIN' && (
+                      <button onClick={() => openAddDeviceModal(gh.id)} style={addDeviceBtnStyle}>+</button>
+                  )}
+                </div>
+              </div>
+
+              {/* Chart Section */}
+              <div style={chartWrapperStyle}>
+                 <HistoryChart ghId={gh.id} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* --- Modals (Keep your existing modals logic) --- */}
       {showGhModal && (
         <div style={modalOverlayStyle}>
           <div style={modalContentStyle}>
-            <h3 style={{ marginTop: 0 }}>🏠 สร้างโรงเรือนใหม่</h3>
+            <h3>🏠 สร้างโรงเรือนใหม่</h3>
             <input type="text" placeholder="ชื่อโรงเรือน..." value={newGhName} onChange={(e) => setNewGhName(e.target.value)} style={inputStyle} />
             <div style={actionBtnContainer}>
               <button onClick={() => setShowGhModal(false)} style={cancelButtonStyle}>ยกเลิก</button>
@@ -200,7 +222,7 @@ const DashboardPage = () => {
       {showDevModal && (
         <div style={modalOverlayStyle}>
           <div style={modalContentStyle}>
-            <h3 style={{ marginTop: 0 }}>⚙️ เพิ่มอุปกรณ์ใหม่</h3>
+            <h3>⚙️ เพิ่มอุปกรณ์ใหม่</h3>
             <label style={labelStyle}>ชื่ออุปกรณ์:</label>
             <input type="text" placeholder="เช่น พัดลม 1" value={newDevName} onChange={(e) => setNewDevName(e.target.value)} style={inputStyle} />
             <label style={{...labelStyle, marginTop: '15px'}}>ประเภท:</label>
@@ -216,44 +238,51 @@ const DashboardPage = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };
 
-// --- STYLES ---
-const cardStyle: React.CSSProperties = {
-  backgroundColor: 'white', border: '1px solid #e0e0e0', marginBottom: '30px', padding: '30px',
-  borderRadius: '20px', width: '100%', maxWidth: '800px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)'
+// --- 🎨 STYLES (ปรับปรุงใหม่ทั้งหมด) ---
+const headerStyle: React.CSSProperties = {
+  backgroundColor: '#fff', borderBottom: '1px solid #e0e0e0',
+  padding: '40px 0 0 0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
 };
-const sensorBoxStyle = (bg: string, col: string): React.CSSProperties => ({
-  flex: 1, backgroundColor: bg, color: col, padding: '25px', borderRadius: '16px', textAlign: 'center',
-  boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
-});
-const addButtonStyle: React.CSSProperties = {
-  padding: '12px 30px', fontSize: '16px', fontWeight: 'bold', backgroundColor: '#27ae60', color: 'white',
-  border: 'none', borderRadius: '50px', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.15)', transition: 'transform 0.2s'
+const headerInnerStyle: React.CSSProperties = {
+  maxWidth: '1400px', width: '95%', margin: '0 auto', display: 'flex', 
+  justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '30px'
 };
-const deviceButtonStyle: React.CSSProperties = {
-  padding: '12px 20px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px', display: 'flex', alignItems: 'center'
-};
-const addDeviceBtnStyle: React.CSSProperties = {
-  padding: '12px 20px', border: '2px dashed #bdc3c7', background: 'transparent', borderRadius: '12px', cursor: 'pointer', color: '#95a5a6', fontWeight: 'bold'
-};
+const brandTitleStyle: React.CSSProperties = { fontSize: '42px', fontWeight: '800', color: '#1a1a1a', margin: 0 };
+const brandSubtitleStyle: React.CSSProperties = { fontSize: '16px', color: '#95a5a6', margin: '5px 0 0 0' };
+const userActionStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '15px' };
+const roleBadgeStyle: React.CSSProperties = { backgroundColor: '#3498db', color: '#fff', padding: '5px 15px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' };
+const logoutBtnStyle: React.CSSProperties = { backgroundColor: 'transparent', border: '1px solid #e74c3c', color: '#e74c3c', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px' };
 
-const modalOverlayStyle: React.CSSProperties = {
-  position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)',
-  backdropFilter: 'blur(3px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
-};
-const modalContentStyle: React.CSSProperties = {
-  backgroundColor: 'white', padding: '30px', borderRadius: '16px', width: '90%', maxWidth: '400px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
-};
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '12px', marginTop: '5px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '16px', boxSizing: 'border-box', outline: 'none'
-};
-const labelStyle: React.CSSProperties = { display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#555' };
+const actionRowStyle: React.CSSProperties = { backgroundColor: '#fafafa', borderTop: '1px solid #f0f0f0', padding: '15px 0' };
+const innerActionRowStyle: React.CSSProperties = { maxWidth: '1400px', width: '95%', margin: '0 auto' };
+const addGhButtonStyle: React.CSSProperties = { backgroundColor: '#27ae60', color: '#fff', border: 'none', padding: '12px 25px', borderRadius: '10px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(39, 174, 96, 0.2)' };
+
+const containerStyle: React.CSSProperties = { maxWidth: '1400px', width: '95%', margin: '0 auto', padding: '40px 0' };
+const gridContainerStyle: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '30px' };
+const cardStyle: React.CSSProperties = { backgroundColor: '#fff', borderRadius: '24px', padding: '30px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', minHeight: '680px', border: '1px solid #f0f0f0' };
+const cardHeaderStyle: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' };
+const idBadgeStyle: React.CSSProperties = { color: '#bdc3c7', fontSize: '12px', fontWeight: 'bold' };
+
+const sensorBoxStyle = (bg: string, col: string): React.CSSProperties => ({ flex: 1, backgroundColor: bg, color: col, padding: '20px', borderRadius: '20px', textAlign: 'center' });
+const sensorLabelStyle: React.CSSProperties = { fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.7, display: 'block', marginBottom: '5px' };
+const sensorValueStyle: React.CSSProperties = { fontSize: '36px', fontWeight: '800' };
+
+const controlHeaderStyle: React.CSSProperties = { margin: '0 0 12px 0', fontSize: '12px', color: '#95a5a6', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' };
+const deviceButtonStyle: React.CSSProperties = { padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', border: '1px solid', transition: 'all 0.2s' };
+const addDeviceBtnStyle: React.CSSProperties = { width: '42px', height: '42px', border: '2px dashed #dcdde1', background: 'none', borderRadius: '12px', color: '#bdc3c7', fontSize: '20px', cursor: 'pointer' };
+const chartWrapperStyle: React.CSSProperties = { width: '100%', height: '350px', marginTop: 'auto', borderTop: '1px solid #f9f9f9', paddingTop: '20px' };
+
+// Modal Styles (Remain similar to your original for functionality)
+const modalOverlayStyle: React.CSSProperties = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 };
+const modalContentStyle: React.CSSProperties = { backgroundColor: '#fff', padding: '35px', borderRadius: '24px', width: '90%', maxWidth: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' };
+const inputStyle: React.CSSProperties = { width: '100%', padding: '12px', marginTop: '10px', borderRadius: '10px', border: '1px solid #ddd', outline: 'none' };
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: '14px', fontWeight: 'bold', color: '#333' };
 const actionBtnContainer: React.CSSProperties = { display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '25px' };
-const saveButtonStyle: React.CSSProperties = { padding: '10px 25px', backgroundColor: '#27ae60', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' };
-const cancelButtonStyle: React.CSSProperties = { padding: '10px 25px', backgroundColor: '#ecf0f1', color: '#7f8c8d', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' };
+const saveButtonStyle: React.CSSProperties = { padding: '10px 25px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' };
+const cancelButtonStyle: React.CSSProperties = { padding: '10px 25px', backgroundColor: '#f1f2f6', color: '#7f8c8d', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' };
 
 export default DashboardPage;

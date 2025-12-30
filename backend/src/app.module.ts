@@ -12,6 +12,7 @@ import { Role } from './users/entities/role.entity';
 import { Greenhouse } from './greenhouses/greenhouse.entity';
 import { Device } from './devices/device.entity';
 import { SensorData } from './greenhouses/sensor-data.entity';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { SensorData } from './greenhouses/sensor-data.entity';
     }),
     GreenhousesModule, // 👈 แก้ตรงนี้ด้วย: เติม s ให้ตรงกับข้างบน
     DevicesModule,
+    ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,
   ],
