@@ -44,7 +44,7 @@ const LoginPage: React.FC<LoginProps> = ({ }) => {
   return (
     <div style={containerStyle}>
       <div style={cardStyle}>
-        <h2 style={{ textAlign: 'center', color: '#2c3e50', marginBottom: '20px' }}>🔐 เข้าสู่ระบบ Smart Farm</h2>
+        <h2 style={{ textAlign: 'center', color: '#2c3e50', marginBottom: '20px' }}>🌿 Log in to Smart Farm.</h2>
         
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom: '15px' }}>
@@ -54,7 +54,7 @@ const LoginPage: React.FC<LoginProps> = ({ }) => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               style={inputStyle}
-              placeholder="admin"
+              placeholder="username"
               required 
             />
           </div>
@@ -66,7 +66,7 @@ const LoginPage: React.FC<LoginProps> = ({ }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={inputStyle}
-              placeholder="password123"
+              placeholder="password"
               required 
             />
           </div>
@@ -78,7 +78,7 @@ const LoginPage: React.FC<LoginProps> = ({ }) => {
             style={buttonStyle}
             disabled={loading}
           >
-            {loading ? 'กำลังโหลด...' : 'เข้าสู่ระบบ'}
+            {loading ? 'Downloading...' : 'Log in'}
           </button>
         </form>
       </div>
