@@ -1,45 +1,51 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
+// 1. กำหนด Interface ให้ตรงกับที่ App.tsx ส่งมา
 interface LoginProps {
   onLoginSuccess: (token: string) => void;
 }
 
-const LoginPage: React.FC<LoginProps> = ({ }) => {
+// 2. ดึง onLoginSuccess ออกมาจาก Props (Destructuring)
+const LoginPage: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      // ยิงไปที่ API Login ของเพื่อน (Person A)
-      // ถ้าเพื่อนยังทำไม่เสร็จ ให้แก้บรรทัดนี้เป็น true เพื่อเทสหน้าเว็บไปก่อน
+      // ยิง API Login
       const response = await axios.post('http://localhost:3000/auth/login', {
         username,
         password,
       });
-      console.log("DATA ที่ได้จาก Backend:", response.data);
-      
-      // ถ้าล็อกอินผ่าน
+
+      console.log("Login Success:", response.data);
+
       const token = response.data.access_token;
-      localStorage.setItem('token', token); // เก็บ Token ไว้
-      window.location.reload();// แจ้ง App ว่าผ่านแล้ว
-      const role = response.data.user.role; 
+      const role = response.data.user.role;
+
+      // เก็บลง LocalStorage
+      localStorage.setItem('token', token);
       localStorage.setItem("role", role);
+
+      // ✅ เรียกใช้ฟังก์ชันจาก Props เพื่อเปลี่ยน State ใน App.tsx
+      onLoginSuccess(token);
 
     } catch (err) {
       console.error(err);
-      setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (หรือ Backend ยังไม่เปิด)');
-      
+      setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <div style={containerStyle}>
@@ -71,40 +77,50 @@ const LoginPage: React.FC<LoginProps> = ({ }) => {
             />
           </div>
 
-          {error && <p style={{ color: 'red', fontSize: '14px', textAlign: 'center' }}>{error}</p>}
+          {error && <p style={{ color: '#e74c3c', fontSize: '14px', textAlign: 'center' }}>{error}</p>}
 
           <button 
             type="submit" 
             style={buttonStyle}
             disabled={loading}
           >
-            {loading ? 'Downloading...' : 'Log in'}
+            {loading ? 'Logging in...' : 'Log in'}
           </button>
+
+          <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: '#7f8c8d' }}>
+            ยังไม่มีบัญชีใช่ไหม? 
+            <span 
+    onClick={() => navigate('/register')} // ใช้ navigate แทน window.location.href
+    style={{ color: '#27ae60', cursor: 'pointer', fontWeight: 'bold', marginLeft: '5px' }}
+  >
+    สมัครสมาชิกใหม่
+  </span>
+          </p>
         </form>
       </div>
     </div>
   );
 };
 
-// --- Styles ---
+// --- Styles (ประกาศไว้ท้ายไฟล์ให้ครบตามที่เรียกใช้) ---
 const containerStyle: React.CSSProperties = {
   display: 'flex', justifyContent: 'center', alignItems: 'center',
   height: '100vh', backgroundColor: '#ecf0f1'
 };
 const cardStyle: React.CSSProperties = {
-  backgroundColor: 'white', padding: '40px', borderRadius: '10px',
-  boxShadow: '0 4px 15px rgba(0,0,0,0.1)', width: '100%', maxWidth: '350px'
+  backgroundColor: 'white', padding: '40px', borderRadius: '15px',
+  boxShadow: '0 8px 24px rgba(0,0,0,0.1)', width: '100%', maxWidth: '350px'
 };
 const labelStyle: React.CSSProperties = {
   display: 'block', marginBottom: '5px', color: '#7f8c8d', fontWeight: 'bold'
 };
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '10px', borderRadius: '5px',
+  width: '100%', padding: '12px', borderRadius: '8px',
   border: '1px solid #bdc3c7', fontSize: '16px', boxSizing: 'border-box'
 };
 const buttonStyle: React.CSSProperties = {
   width: '100%', padding: '12px', backgroundColor: '#27ae60', color: 'white',
-  border: 'none', borderRadius: '5px', fontSize: '16px', fontWeight: 'bold',
+  border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold',
   cursor: 'pointer', transition: '0.3s'
 };
 

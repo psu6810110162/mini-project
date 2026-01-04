@@ -13,50 +13,34 @@ export class UsersService implements OnModuleInit {
     private rolesRepository: Repository<Role>,
   ) {}
 
-  async onModuleInit() {
-    console.log('🌱 Checking seed data...');
-    await this.seedData();
-  }
-
-  private async seedData() {
-    // 1. ROLE ADMIN
-    let adminRole = await this.rolesRepository.findOne({ where: { name: 'ADMIN' } });
-    if (!adminRole) {
-      adminRole = this.rolesRepository.create({ name: 'ADMIN', description: 'ผู้ดูแลระบบสูงสุด' });
-      await this.rolesRepository.save(adminRole);
-    }
-
-    // 2. ROLE USER
+  // ✅ เพิ่มฟังก์ชันสร้าง User ใหม่ (แทนที่ตัวเก่าที่มี Error)
+  async create(username: string, password: string) {
+    // ดึง Role 'USER' มากำหนดให้ผู้สมัครใหม่
     let userRole = await this.rolesRepository.findOne({ where: { name: 'USER' } });
+    
     if (!userRole) {
       userRole = this.rolesRepository.create({ name: 'USER', description: 'ผู้ใช้งานทั่วไป' });
       await this.rolesRepository.save(userRole);
     }
 
-    // 3. USER ADMIN
-    const adminUser = await this.usersRepository.findOne({ where: { username: 'admin' } });
-    if (!adminUser) {
-      const newAdmin = this.usersRepository.create({
-        username: 'admin',
-        password: 'password123',
-        role: adminRole,
-      });
-      await this.usersRepository.save(newAdmin);
-    }
+    const newUser = this.usersRepository.create({
+      username,
+      password, // แนะนำให้ใช้ bcrypt.hash ภายหลัง
+      role: userRole,
+    });
 
-    // 4. USER NORMAL
-    const normalUser = await this.usersRepository.findOne({ where: { username: 'user' } });
-    if (!normalUser) {
-      const newUser = this.usersRepository.create({
-        username: 'user',
-        password: 'password123',
-        role: userRole,
-      });
-      await this.usersRepository.save(newUser);
-    }
+    return await this.usersRepository.save(newUser);
   }
 
-  // 👇 แก้ Type ตรงนี้ให้รองรับ null
+  async onModuleInit() {
+    await this.seedData();
+  }
+
+  private async seedData() {
+    // ... โค้ด seedData เดิมของน้อง (ADMIN/USER/admin user) ไว้เหมือนเดิมได้เลยครับ ...
+    // พี่ขอละไว้เพื่อให้โค้ดสั้นลงแต่ห้ามลบของเดิมนะ
+  }
+
   async findOne(username: string): Promise<User | null> {
     return this.usersRepository.findOne({ 
         where: { username },

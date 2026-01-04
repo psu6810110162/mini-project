@@ -5,8 +5,15 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('login') // 👈 นี่คือจุดที่ Frontend ยิงเข้ามา (/auth/login)
-  async login(@Body() req) {
-    return this.authService.login(req);
+  @Post('login')
+  async login(@Body() loginData: any) {
+    return this.authService.login(loginData);
+  }
+
+  // ✅ เพิ่ม Route สำหรับสมัครสมาชิก
+  @Post('register')
+  async register(@Body() registerData: any) {
+    // รับ username, password ส่งต่อไปที่ register ใน AuthService
+    return this.authService.register(registerData);
   }
 }

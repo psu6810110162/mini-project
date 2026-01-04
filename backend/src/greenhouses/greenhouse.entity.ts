@@ -21,4 +21,6 @@ export class Greenhouse {
 
   @OneToMany(() => SensorData, (data) => data.greenhouse)
   sensorData: SensorData[];
+
+  
 }
