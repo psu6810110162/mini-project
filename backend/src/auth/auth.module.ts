@@ -1,11 +1,29 @@
+// src/auth/auth.module.ts
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
+import { PassportModule } from '@nestjs/passport';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtStrategy } from './jwt.strategy'; // <--- Import ตัวเก่งของคุณ
 
 @Module({
-  imports: [UsersModule], // Import UsersModule เพื่อเช็ค user ใน DB
+  imports: [
+    UsersModule,
+    PassportModule,
+    // ตั้งค่า JWT ให้โหลด Secret จาก .env
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: '1d' }, // Token อายุ 1 วัน
+      }),
+    }),
+  ],
+  providers: [AuthService, JwtStrategy], // <--- ใส่ JwtStrategy ตรงนี้สำคัญมาก!
   controllers: [AuthController],
-  providers: [AuthService],
+  exports: [AuthService],
 })
 export class AuthModule {}

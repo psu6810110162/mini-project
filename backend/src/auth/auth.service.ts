@@ -1,37 +1,51 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+// src/auth/auth.service.ts
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private jwtService: JwtService,
+  ) {}
 
-  async register(registerData: any) {
-    const { username, password } = registerData;
-
-    // 1. ตรวจสอบว่าชื่อผู้ใช้งานซ้ำหรือไม่
-    const existingUser = await this.usersService.findOne(username);
-    if (existingUser) {
-      throw new BadRequestException('ชื่อผู้ใช้งานนี้ถูกใช้ไปแล้ว');
+  // 1. ฟังก์ชันตรวจสอบ Username และ Password
+  async validateUser(username: string, pass: string): Promise<any> {
+    // หา User จาก Database
+    const user = await this.usersService.findOne(username);
+    
+    // ถ้าเจอ User และ Password (ที่ Hash แล้ว) ตรงกัน
+    if (user && (await bcrypt.compare(pass, user.password))) {
+      const { password, ...result } = user; // ตัด field password ทิ้งเพื่อความปลอดภัย
+      return result; // คืนค่า User ที่ไม่มี password
     }
-
-    // 2. สั่งให้ UsersService สร้าง User ใหม่ลงฐานข้อมูล
-    return await this.usersService.create(username, password);
+    
+    return null; // ถ้าไม่ผ่าน คืนค่า null
   }
 
-  async login(loginData: any) {
-    const user = await this.usersService.findOne(loginData.username);
+  // 2. ฟังก์ชัน Login (สร้าง Token)
+  async login(user: any) {
+    // สร้าง Payload ให้ตรงกับ interface JwtPayload ที่คุณเขียนใน Strategy
+    const payload = { 
+      username: user.username, 
+      sub: user.id, // sub คือ Subject (มักใช้ ID)
+      role: user.role?.name || 'USER' // ดึงชื่อ Role ออกมา (ระวัง! ถ้า user.role เป็น Object ต้อง .name)
+    };
 
-    if (user && user.password === loginData.password) {
-      const roleName = user.role ? user.role.name : 'USER';
-      return {
-        access_token: 'fake-jwt-token-' + user.id, // ในงานจริงควรใช้ JwtService
-        user: {
-          id: user.id,
-          username: user.username,
-          role: roleName 
-        }
-      };
-    }
-    throw new UnauthorizedException('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+    return {
+      access_token: this.jwtService.sign(payload), // สร้าง JWT String
+      user: { // ส่งข้อมูล user กลับไปให้ Frontend ใช้ด้วยก็ได้
+        id: user.id,
+        username: user.username,
+        role: user.role?.name
+      }
+    };
+  }
+
+  // 3. Register (เรียกใช้ UsersService)
+  async register(userDto: any) {
+    return this.usersService.create(userDto);
   }
 }
