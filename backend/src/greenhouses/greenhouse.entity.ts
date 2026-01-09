@@ -25,4 +25,7 @@ export class Greenhouse {
 
   @OneToMany(() => Permission, (permission) => permission.greenhouse)
   permissions: Permission[];
+  
+  @Column({ type: 'float', default: 50.0 })
+  light: number;
 }

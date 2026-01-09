@@ -17,4 +17,7 @@ export class SensorData {
 
   @ManyToOne(() => Greenhouse, (gh) => gh.sensorData, { onDelete: 'CASCADE' })
   greenhouse: Greenhouse;
+
+  @Column({ type: 'float', default: 0 })
+  light: number;
 }

@@ -30,11 +30,11 @@ const LoginPage: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       console.log("Login Success:", response.data);
 
       const token = response.data.access_token;
-      const role = response.data.user.role;
 
       // เก็บลง LocalStorage
-      localStorage.setItem('token', token);
-      localStorage.setItem("role", role);
+      localStorage.setItem('token', response.data.access_token);
+      localStorage.setItem('role', response.data.user.role); // 👈 ต้องมี .user. เพิ่มเข้ามา
+      localStorage.setItem('username', response.data.user.username);
 
       // ✅ เรียกใช้ฟังก์ชันจาก Props เพื่อเปลี่ยน State ใน App.tsx
       onLoginSuccess(token);
@@ -88,12 +88,12 @@ const LoginPage: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </button>
 
           <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: '#7f8c8d' }}>
-            ยังไม่มีบัญชีใช่ไหม? 
+            Don't have an account yet?
             <span 
     onClick={() => navigate('/register')} // ใช้ navigate แทน window.location.href
     style={{ color: '#27ae60', cursor: 'pointer', fontWeight: 'bold', marginLeft: '5px' }}
   >
-    สมัครสมาชิกใหม่
+    Sign up
   </span>
           </p>
         </form>
