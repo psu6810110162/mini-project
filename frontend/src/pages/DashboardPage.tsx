@@ -3,12 +3,10 @@ import axios from 'axios';
 import HistoryChart from './HistoryChart'; 
 import SensorsPage from './SensorsPage'; 
 import Swal from 'sweetalert2';
-import { useNavigate } from 'react-router-dom';
 
 const DashboardPage = () => {
   const [activeMenu, setActiveMenu] = useState<'overview' | 'sensors'>('overview');
   const [greenhouses, setGreenhouses] = useState<any[]>([]);
-  const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
   // ดึง Role และแปลงเป็นตัวเล็ก
