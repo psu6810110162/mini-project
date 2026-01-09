@@ -22,5 +22,6 @@ export class Greenhouse {
   @OneToMany(() => SensorData, (data) => data.greenhouse)
   sensorData: SensorData[];
 
-  
+  @Column({ type: 'float', default: 50.0 })
+  light: number;
 }

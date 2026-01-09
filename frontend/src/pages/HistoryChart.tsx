@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend 
 } from 'recharts';
 import axios from 'axios';
 
@@ -14,9 +14,12 @@ export default function HistoryChart({ ghId }: ChartProps) {
   const fetchHistory = async () => {
     try {
       const res = await axios.get(`http://localhost:3000/greenhouses/${ghId}/history`);
-      const formattedData = res.data.reverse().map((item: any) => ({
+      // เอาข้อมูล 12 ล่าสุดมาแสดง
+      const formattedData = res.data.reverse().slice(-12).map((item: any) => ({
         ...item,
-        time: new Date(item.timestamp).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        time: new Date(item.timestamp).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+        // ตรวจสอบว่ามีค่า light ไหม ถ้าไม่มีให้เป็น 0 กันกราฟพัง
+        light: item.light || 0, 
       }));
       setData(formattedData);
     } catch (error) {
@@ -30,25 +33,25 @@ export default function HistoryChart({ ghId }: ChartProps) {
     return () => clearInterval(interval);
   }, [ghId]);
 
-  // 🎨 สร้างกล่อง Tooltip เอง (เวลาเอาเมาส์ชี้)
+  // 🔥 ปรับปรุง Tooltip ให้โชว์ 3 ค่า
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          border: '1px solid #ddd',
-          borderRadius: '8px',
-          padding: '10px',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+          backgroundColor: '#fff',
+          border: 'none',
+          borderRadius: '12px',
+          padding: '12px',
+          boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+          fontSize: '13px'
         }}>
-          <p style={{ margin: 0, fontWeight: 'bold', color: '#555' }}>⏰ {label}</p>
-          <div style={{ marginTop: '5px' }}>
-            <p style={{ margin: 0, color: '#ff4d4d', fontSize: '14px' }}>
-              🌡️ อุณหภูมิ: <b>{payload[0].value}°C</b>
-            </p>
-            <p style={{ margin: 0, color: '#3498db', fontSize: '14px' }}>
-              💧 ความชื้น: <b>{payload[1].value}%</b>
-            </p>
+          <p style={{ margin: '0 0 8px', fontWeight: 'bold', color: '#2c3e50' }}>🕒 เวลา {label} น.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <span style={{ color: '#ff7675', fontWeight: '500' }}>🌡️ อุณหภูมิ: {payload[0].value}%</span>
+            <span style={{ color: '#74b9ff', fontWeight: '500' }}>💧 ความชื้น: {payload[1].value}%</span>
+            {payload[2] && (
+              <span style={{ color: '#f1c40f', fontWeight: '500' }}>☀️ แสงแดด: {payload[2].value}%</span>
+            )}
           </div>
         </div>
       );
@@ -57,66 +60,61 @@ export default function HistoryChart({ ghId }: ChartProps) {
   };
 
   return (
-    <div style={{ width: '100%', height: 320, marginTop: '20px' }}>
-      <h4 style={{ textAlign: 'center', color: '#7f8c8d', marginBottom: '10px' }}>
-        📊 กราฟแสดงผลย้อนหลัง (Real-time)
+    <div style={{ width: '100%', height: 350, backgroundColor: '#fff', padding: '20px', borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+      <h4 style={{ textAlign: 'left', color: '#2c3e50', marginBottom: '20px', fontSize: '16px', fontWeight: '600' }}>
+         สถิติสภาพอากาศในโรงเรือน
       </h4>
       
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
+      <ResponsiveContainer width="100%" height="90%">
+        <BarChart
           data={data}
           margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+          barGap={5} // ปรับระยะห่างระหว่างแท่งให้พอดี
         >
-          {/* 1. กำหนดการไล่สี (Gradient) */}
-          <defs>
-            <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#ff4d4d" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="#ff4d4d" stopOpacity={0}/>
-            </linearGradient>
-            <linearGradient id="colorHum" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3498db" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="#3498db" stopOpacity={0}/>
-            </linearGradient>
-          </defs>
-
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
           
           <XAxis 
             dataKey="time" 
-            tick={{ fontSize: 12, fill: '#aaa' }} 
+            tick={{ fontSize: 11, fill: '#95a5a6' }} 
             tickLine={false}
             axisLine={false} 
           />
           <YAxis 
-            tick={{ fontSize: 12, fill: '#aaa' }} 
+            tick={{ fontSize: 11, fill: '#95a5a6' }} 
             tickLine={false}
             axisLine={false}
           />
           
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8f9fa'}} />
+          <Legend iconType="circle" wrapperStyle={{ paddingTop: '15px', fontSize: '12px' }} />
 
-          {/* 2. พื้นที่กราฟ (Area) */}
-          <Area 
-            type="monotone" 
+          {/* แท่งกราฟอุณหภูมิ */}
+          <Bar 
             dataKey="temp" 
-            stroke="#ff4d4d" 
-            strokeWidth={3}
-            fillOpacity={1} 
-            fill="url(#colorTemp)" 
-            name="อุณหภูมิ"
-            activeDot={{ r: 6, strokeWidth: 0 }}
+            name="อุณหภูมิ (%)" 
+            fill="#ff7675" 
+            radius={[4, 4, 0, 0]} 
+            barSize={12}
           />
-          <Area 
-            type="monotone" 
+          
+          {/* แท่งกราฟความชื้น */}
+          <Bar 
             dataKey="humidity" 
-            stroke="#3498db" 
-            strokeWidth={3}
-            fillOpacity={1} 
-            fill="url(#colorHum)" 
-            name="ความชื้น"
-            activeDot={{ r: 6, strokeWidth: 0 }}
+            name="ความชื้น (%)" 
+            fill="#74b9ff" 
+            radius={[4, 4, 0, 0]} 
+            barSize={12}
           />
-        </AreaChart>
+
+          {/* 🔥 แท่งกราฟความเข้มแสง (สีเหลือง) */}
+          <Bar 
+            dataKey="light" 
+            name="ความเข้มแสง (%)" 
+            fill="#f1c40f" 
+            radius={[4, 4, 0, 0]} 
+            barSize={12}
+          />
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
