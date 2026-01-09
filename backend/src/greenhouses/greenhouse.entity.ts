@@ -1,8 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Device } from '../devices/device.entity';
 import { SensorData } from './sensor-data.entity';
+import { Permission } from '../permissions/permission.entity';
 
-@Entity()
+@Entity('greenhouses')
 export class Greenhouse {
   @PrimaryGeneratedColumn()
   id: number;
@@ -22,5 +23,6 @@ export class Greenhouse {
   @OneToMany(() => SensorData, (data) => data.greenhouse)
   sensorData: SensorData[];
 
-  
+  @OneToMany(() => Permission, (permission) => permission.greenhouse)
+  permissions: Permission[];
 }
