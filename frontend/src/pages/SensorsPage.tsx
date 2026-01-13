@@ -6,18 +6,16 @@ interface SensorsPageProps {
 }
 
 const SensorsPage: React.FC<SensorsPageProps> = ({ greenhouses, onRefresh }) => {
-  // ดึงข้อมูลอุปกรณ์พร้อมค่าเซนเซอร์จากโรงเรือนที่สังกัด
   const allDevices = greenhouses.flatMap(gh => 
     gh.devices.map((dev: any) => ({ 
       ...dev, 
       ghName: gh.name, 
       ghTemp: gh.temp, 
       ghHum: gh.humidity,
-      ghLight: gh.light // ดึงค่าแสงมาด้วย
+      ghLight: gh.light 
     }))
   );
 
-  // ฟังก์ชันเลือก Icon ตามประเภทอุปกรณ์
   const getIcon = (type: string) => {
     switch (type) {
       case 'FAN': return '🪭';
@@ -28,13 +26,12 @@ const SensorsPage: React.FC<SensorsPageProps> = ({ greenhouses, onRefresh }) => 
     }
   };
 
-  // ฟังก์ชันเลือกสีขอบตามประเภท
   const getBorderColor = (type: string) => {
     switch (type) {
-      case 'FAN': return '#ff7675'; // แดงชมพู (อุณหภูมิ)
-      case 'PUMP': return '#74b9ff'; // ฟ้า (ความชื้น)
+      case 'FAN': return '#ff7675'; 
+      case 'PUMP': return '#74b9ff';
       case 'LIGHT': 
-      case 'LUX_SENSOR': return '#f1c40f'; // เหลือง (แสง)
+      case 'LUX_SENSOR': return '#f1c40f'; 
       default: return '#2ecc71';
     }
   };
@@ -60,7 +57,7 @@ const SensorsPage: React.FC<SensorsPageProps> = ({ greenhouses, onRefresh }) => 
               </div>
             </div>
             
-            {/* แสดงค่าเซนเซอร์ตามประเภทอุปกรณ์ */}
+            {/*  */}
             <div style={sensorValue}>
               {dev.type === 'FAN' && `${dev.ghTemp}°C`}
               {dev.type === 'PUMP' && `${dev.ghHum}%`}
@@ -73,7 +70,6 @@ const SensorsPage: React.FC<SensorsPageProps> = ({ greenhouses, onRefresh }) => 
   );
 };
 
-// Styles สำหรับ SensorsPage
 const sensorGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' };
 const sensorCard = { 
   backgroundColor: 'white', 

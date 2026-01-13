@@ -11,7 +11,7 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
-  // ดึง Role และแปลงเป็นตัวเล็ก
+
   const rawRole = localStorage.getItem('role') || '';
   const role = rawRole.toLowerCase(); 
   const username = localStorage.getItem('username') || 'User';
@@ -45,7 +45,6 @@ const DashboardPage = () => {
     } catch (error) { Swal.fire('Error', 'ไม่สามารถสั่งงานได้', 'error'); }
   };
 
-  // --- Admin Functions ---
 
   const handleAddGreenhouse = async () => {
     const { value: name } = await Swal.fire({
@@ -216,7 +215,7 @@ const DashboardPage = () => {
   );
 };
 
-// --- Styles ---
+
 const dashboardContainer: React.CSSProperties = { display: 'flex', height: '100vh', backgroundColor: '#f8f9fa' };
 const sidebarStyle: React.CSSProperties = { width: '260px', backgroundColor: '#2c3e50', color: 'white', display: 'flex', flexDirection: 'column', padding: '20px' };
 const logoArea: React.CSSProperties = { fontSize: '24px', fontWeight: 'bold', marginBottom: '40px', textAlign: 'center', color: '#2ecc71' };
@@ -238,7 +237,7 @@ const logoutBtn: React.CSSProperties = { padding: '12px', backgroundColor: '#e74
 const btnAdd: React.CSSProperties = { backgroundColor: '#2ecc71', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 10px rgba(46, 204, 113, 0.3)' };
 const btnSmallAdd: React.CSSProperties = { backgroundColor: '#3498db', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' };
 
-// สไตล์ใหม่สำหรับปุ่มลบกากบาทวงกลม
+
 const btnDeleteCircle: React.CSSProperties = {
   width: '20px',
   height: '20px',

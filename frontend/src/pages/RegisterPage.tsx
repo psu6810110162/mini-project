@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { useNavigate } from 'react-router-dom'; // เพิ่มตัวเปลี่ยนหน้าแบบ SPA
+import { useNavigate } from 'react-router-dom'; 
 
 const RegisterPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate(); // สร้างฟังก์ชันสำหรับย้ายหน้า
+  const navigate = useNavigate(); 
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,10 +16,7 @@ const RegisterPage = () => {
     setError('');
 
     try {
-      // 1. ส่งข้อมูลสมัครสมาชิกไปที่ Backend
       await axios.post('http://localhost:3000/auth/register', { username, password });
-
-      // 2. แสดง SweetAlert2 (ใส่ await เพื่อให้หยุดรอคนกดปุ่ม)
       await Swal.fire({
         title: "สมัครสมาชิกสำเร็จ!",
         text: "ยินดีด้วย! คุณสามารถเข้าสู่ระบบได้แล้ว",
@@ -28,13 +25,11 @@ const RegisterPage = () => {
         confirmButtonText: "ตกลง",
       });
 
-      // 3. ย้ายไปหน้า Login หลังจากกดปุ่มตกลง
       navigate('/login');
 
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่';
-      
-      // แสดง Error กลางจอแทนตัวหนังสือสีแดง
+
       Swal.fire({
         title: "เกิดข้อผิดพลาด",
         text: errorMessage,
@@ -99,7 +94,6 @@ const RegisterPage = () => {
   );
 };
 
-// --- Styles (CSS-in-JS) ---
 const containerStyle: React.CSSProperties = { 
   display: 'flex', 
   justifyContent: 'center', 

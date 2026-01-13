@@ -14,11 +14,10 @@ export default function HistoryChart({ ghId }: ChartProps) {
   const fetchHistory = async () => {
     try {
       const res = await axios.get(`http://localhost:3000/greenhouses/${ghId}/history`);
-      // เอาข้อมูล 12 ล่าสุดมาแสดง
+      
       const formattedData = res.data.reverse().slice(-12).map((item: any) => ({
         ...item,
         time: new Date(item.timestamp).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-        // ตรวจสอบว่ามีค่า light ไหม ถ้าไม่มีให้เป็น 0 กันกราฟพัง
         light: item.light || 0, 
       }));
       setData(formattedData);
@@ -29,11 +28,10 @@ export default function HistoryChart({ ghId }: ChartProps) {
 
   useEffect(() => {
     fetchHistory();
-    const interval = setInterval(fetchHistory, 5000);
+    const interval = setInterval(fetchHistory,1000);
     return () => clearInterval(interval);
   }, [ghId]);
 
-  // 🔥 ปรับปรุง Tooltip ให้โชว์ 3 ค่า
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -69,7 +67,7 @@ export default function HistoryChart({ ghId }: ChartProps) {
         <BarChart
           data={data}
           margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-          barGap={5} // ปรับระยะห่างระหว่างแท่งให้พอดี
+          barGap={5} 
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
           
@@ -106,7 +104,7 @@ export default function HistoryChart({ ghId }: ChartProps) {
             barSize={12}
           />
 
-          {/* 🔥 แท่งกราฟความเข้มแสง (สีเหลือง) */}
+          {/* แท่งกราฟความเข้มแสง */}
           <Bar 
             dataKey="light" 
             name="ความเข้มแสง (%)" 
