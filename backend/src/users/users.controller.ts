@@ -1,10 +1,7 @@
-import { Controller, Get, Delete, Param, UseGuards } from '@nestjs/common';
+import {Controller, Get, Delete, Param, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';// ยามเฝ้าประตู (Phase 2)
-<<<<<<< HEAD
 import { AdminGuard } from '../auth/admin.guard';
-=======
->>>>>>> origin/main
 
 @Controller('users') // API จะขึ้นต้นด้วย /users
 export class UsersController {
@@ -30,10 +27,7 @@ export class UsersController {
   // 3. ลบ User (สำหรับให้ Admin ใช้ กรณีต้องการลบ user ออก)
   // เรียก: DELETE http://localhost:3000/users/2
   // API: DELETE /users/:id
-<<<<<<< HEAD
   @UseGuards(JwtAuthGuard, AdminGuard)
-=======
->>>>>>> origin/main
   @Delete(':id')
   remove(@Param('id') id: number) {
     return this.usersService.remove(id);
