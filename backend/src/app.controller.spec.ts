@@ -15,8 +15,8 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return "Smart Farm API is Ready! 🚀"', () => {
+      expect(appController.getHello()).toBe('Smart Farm API is Ready! 🚀');
     });
   });
 });

@@ -3,12 +3,12 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 // 1. กำหนด Interface ให้ตรงกับที่ App.tsx ส่งมา
-interface LoginProps {
-  onLoginSuccess: (token: string) => void;
-}
+interface LoginProps {}
 
-// 2. ดึง onLoginSuccess ออกมาจาก Props (Destructuring)
-const LoginPage: React.FC<LoginProps> = ({ onLoginSuccess }) => {
+// 2. ใช้ AuthContext แทนการใช้ Props
+import { useAuth } from '../context/AuthContext';
+const LoginPage: React.FC<LoginProps> = () => {
+  const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -32,12 +32,9 @@ const LoginPage: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       const token = response.data.access_token;
       const role = response.data.user.role;
 
-      // เก็บลง LocalStorage
-      localStorage.setItem('token', token);
-      localStorage.setItem("role", role);
-
-      // ✅ เรียกใช้ฟังก์ชันจาก Props เพื่อเปลี่ยน State ใน App.tsx
-      onLoginSuccess(token);
+      // เก็บและอัปเดต auth state ผ่าน Context
+      login(token, role);
+      navigate('/dashboard');
 
     } catch (err) {
       console.error(err);
