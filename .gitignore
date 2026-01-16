@@ -1,0 +1,31 @@
+# Environment Variables
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=admin
+DB_PASSWORD=password123
+DB_DATABASE=agricontrol
+# Security
+JWT_SECRET=superSecretKeyDoNotShare123!
+# API Keys
+API_KEY=your_api_key_here
+API_SECRET=your_api_secret_here
+# Third-Party Service Credentials
+SERVICE_CLIENT_ID=your_client_id_here
+SERVICE_CLIENT_SECRET=your_client_secret_here
+# Application Settings
+APP_MODE=development
+APP_DEBUG=true
+APP_URL=http://localhost:3000
+# Logging Configuration
+LOG_LEVEL=info
+LOG_FILE_PATH=./logs/app.log
+# Feature Toggles
+FEATURE_X_ENABLED=true
+FEATURE_Y_ENABLED=false
+# Miscellaneous
