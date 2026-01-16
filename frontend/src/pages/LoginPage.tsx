@@ -54,7 +54,7 @@ const LoginPage: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom: '15px' }}>
-            <label style={labelStyle}>Username</label>
+            <label style={labelStyle}>ชื่อผู้ใช้</label>
             <input 
               type="text" 
               value={username}
@@ -66,7 +66,7 @@ const LoginPage: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={labelStyle}>Password</label>
+            <label style={labelStyle}>รหัสผ่าน</label>
             <input 
               type="password" 
               value={password}
@@ -88,12 +88,12 @@ const LoginPage: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </button>
 
           <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: '#7f8c8d' }}>
-            Don't have an account yet?
+            ยังไม่มีบัญชี?
             <span 
     onClick={() => navigate('/register')} // ใช้ navigate แทน window.location.href
     style={{ color: '#27ae60', cursor: 'pointer', fontWeight: 'bold', marginLeft: '5px' }}
   >
-    Sign up
+    สมัครสมาชิก
   </span>
           </p>
         </form>
