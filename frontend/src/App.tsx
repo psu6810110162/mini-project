@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
-import Dashboard from './pages/DashboardPage'; 
+import DashboardPage from './pages/DashboardPage';
 import RegisterPage from './pages/RegisterPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -22,7 +22,7 @@ function AuthRoutes() {
       {/* หน้า Dashboard: ถ้าไม่มี Token ให้กลับไป Login */}
       <Route 
         path="/dashboard" 
-        element={token ? <Dashboard /> : <Navigate to="/login" replace />} 
+        element={token ? <DashboardPage /> : <Navigate to="/login" replace />} 
       />
 
       {/* หน้าแรกและหน้าอื่นๆ */}

@@ -1,13 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
-// 1. กำหนด Interface ให้ตรงกับที่ App.tsx ส่งมา
-interface LoginProps {}
-
-// 2. ใช้ AuthContext แทนการใช้ Props
 import { useAuth } from '../context/AuthContext';
-const LoginPage: React.FC<LoginProps> = () => {
+
+const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -34,6 +30,12 @@ const LoginPage: React.FC<LoginProps> = () => {
 
       // เก็บและอัปเดต auth state ผ่าน Context
       login(token, role);
+      
+      // เก็บลง LocalStorage สำหรับ DashboardPage ใช้
+      localStorage.setItem('token', token);
+      localStorage.setItem('role', role);
+      localStorage.setItem('username', response.data.user.username);
+      
       navigate('/dashboard');
 
     } catch (err) {
@@ -51,7 +53,7 @@ const LoginPage: React.FC<LoginProps> = () => {
         
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom: '15px' }}>
-            <label style={labelStyle}>Username</label>
+            <label style={labelStyle}>ชื่อผู้ใช้</label>
             <input 
               type="text" 
               value={username}
@@ -63,7 +65,7 @@ const LoginPage: React.FC<LoginProps> = () => {
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={labelStyle}>Password</label>
+            <label style={labelStyle}>รหัสผ่าน</label>
             <input 
               type="password" 
               value={password}
@@ -85,13 +87,13 @@ const LoginPage: React.FC<LoginProps> = () => {
           </button>
 
           <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: '#7f8c8d' }}>
-            ยังไม่มีบัญชีใช่ไหม? 
+            ยังไม่มีบัญชี?
             <span 
-    onClick={() => navigate('/register')} // ใช้ navigate แทน window.location.href
-    style={{ color: '#27ae60', cursor: 'pointer', fontWeight: 'bold', marginLeft: '5px' }}
-  >
-    สมัครสมาชิกใหม่
-  </span>
+              onClick={() => navigate('/register')}
+              style={{ color: '#27ae60', cursor: 'pointer', fontWeight: 'bold', marginLeft: '5px' }}
+            >
+              สมัครสมาชิก
+            </span>
           </p>
         </form>
       </div>
@@ -99,7 +101,7 @@ const LoginPage: React.FC<LoginProps> = () => {
   );
 };
 
-// --- Styles (ประกาศไว้ท้ายไฟล์ให้ครบตามที่เรียกใช้) ---
+// --- Styles ---
 const containerStyle: React.CSSProperties = {
   display: 'flex', justifyContent: 'center', alignItems: 'center',
   height: '100vh', backgroundColor: '#ecf0f1'

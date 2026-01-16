@@ -1,7 +1,9 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+// src/auth/auth.service.ts
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -10,29 +12,28 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(registerData: any) {
-    const { username, password } = registerData;
-
-    // 1. ตรวจสอบว่าชื่อผู้ใช้งานซ้ำหรือไม่
-    const existingUser = await this.usersService.findOne(username);
-    if (existingUser) {
-      throw new BadRequestException('ชื่อผู้ใช้งานนี้ถูกใช้ไปแล้ว');
+  // 1. ฟังก์ชันตรวจสอบ Username และ Password
+  async validateUser(username: string, pass: string): Promise<any> {
+    const user = await this.usersService.findOne(username);
+    
+    if (user && (await bcrypt.compare(pass, user.password))) {
+      const { password, ...result } = user;
+      return result;
     }
-
-    // 2. สั่งให้ UsersService สร้าง User ใหม่ลงฐานข้อมูล (UsersService จะ hash รหัสผ่าน)
-    return await this.usersService.create(username, password);
+    
+    return null;
   }
 
-  async login(loginData: any) {
-    const user = await this.usersService.findOne(loginData.username);
-
+  // 2. ฟังก์ชัน Login (สร้าง Token)
+  async login(loginData: LoginDto) {
+    // ตรวจสอบ user ก่อน
+    const user = await this.validateUser(loginData.username, loginData.password);
+    
     if (!user) throw new UnauthorizedException('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
-
-    const match = await bcrypt.compare(loginData.password, user.password);
-    if (!match) throw new UnauthorizedException('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
 
     const roleName = user.role ? user.role.name : 'USER';
     const payload = { sub: user.id, username: user.username, role: roleName };
+    
     return {
       access_token: this.jwtService.sign(payload),
       user: {
@@ -41,5 +42,10 @@ export class AuthService {
         role: roleName,
       }
     };
+  }
+
+  // 3. Register
+  async register(userDto: any) {
+    return this.usersService.create(userDto);
   }
 }
