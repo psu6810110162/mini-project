@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany } from 'typeorm';
 import { Device } from '../devices/device.entity';
 import { SensorData } from './sensor-data.entity';
 import { Permission } from '../permissions/permission.entity';
@@ -8,14 +8,20 @@ export class Greenhouse {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ length: 100 })
   name: string;
 
-  @Column('float', { default: 25.0 })
+  @Column({ type: 'text', nullable: true })
+  description: string;
+
+  @Column('float', { default: 0.0 })
   temp: number;
 
-  @Column('float', { default: 60.0 })
+  @Column('float', { default: 0.0 })
   humidity: number;
+
+  @Column({ type: 'float', default: 0.0 })
+  light: number;
 
   @OneToMany(() => Device, (device) => device.greenhouse, { cascade: true })
   devices: Device[]; // 👈 ต้องมีบรรทัดนี้
@@ -25,7 +31,8 @@ export class Greenhouse {
 
   @OneToMany(() => Permission, (permission) => permission.greenhouse)
   permissions: Permission[];
-  
-  @Column({ type: 'float', default: 50.0 })
-  light: number;
+
+  @ManyToMany(() => User, (user) => user.greenhouses)
+  users: User[];
+
 }

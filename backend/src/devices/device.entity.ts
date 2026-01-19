@@ -1,15 +1,15 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Greenhouse } from '../greenhouses/greenhouse.entity'; // 👈 import
 
-@Entity()
+@Entity('devices')
 export class Device {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ length: 100 })
   name: string;
 
-  @Column()
+  @Column({ length: 50 })
   type: string; // 'FAN', 'PUMP', 'LIGHT'
 
   @Column({ default: false })

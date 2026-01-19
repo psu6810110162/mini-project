@@ -5,23 +5,26 @@ import Swal from 'sweetalert2';
 //import { HistoryChart } from './HistoryChart';
 import HistoryChart  from '../components/HistoryChart';
 import SensorsPage from './SensorsPage';
+import type { Greenhouse } from '../types';
+
 //greenhouseId
 // Interface ให้ TypeScript รู้จักหน้าตาข้อมูล
-interface Device {
-  id: number;
-  name: string;
-  type: string;
-  is_active: boolean;
-}
+//interface Device {
+  //id: number;
+  //name: string;
+  //type: string;
+  //is_active: boolean;
+//}
 
-interface Greenhouse {
-  id: number;
-  name: string;
-  temp: number;
-  humidity: number;
-  devices: Device[];
-  light?: number; // เพิ่ม field นี้เผื่อไว้เพราะใน UI มีการเรียกใช้
-}
+//interface Greenhouse {
+  //id: number;
+  //name: string;
+  //temp: number;
+  //humidity: number;
+  //devices: Device[];
+  //users: IUser[];
+  //light?: number; // เพิ่ม field นี้เผื่อไว้เพราะใน UI มีการเรียกใช้
+//}
 
 const DashboardPage = () => {
   const [activeMenu, setActiveMenu] = useState<'overview' | 'sensors'>('overview');

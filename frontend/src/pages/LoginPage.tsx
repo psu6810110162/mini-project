@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
+import { IUser } from '../types';
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
